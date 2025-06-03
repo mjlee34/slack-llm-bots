@@ -7,6 +7,8 @@ from slack_sdk.errors import SlackApiError
 from collections import defaultdict
 import notion_client
 from openai import OpenAI
+from tqdm import tqdm
+import numpy as np
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -85,6 +87,49 @@ def speaker_distribution(messages):
         dist[user] += 1
     return dict(dist)
 
+# 대화 중복도 측정 (임베딩 기반)
+def message_redundancy(messages, threshold=0.85):
+    if len(messages) < 2:
+        return 0.0
+    texts = [m['text'] for m in messages]
+    embeds = client.embeddings.create(
+        input=texts,
+        model="text-embedding-ada-002"
+    ).data
+    vectors = np.array([e.embedding for e in embeds])
+    # 코사인 유사도 행렬 계산
+    norm = np.linalg.norm(vectors, axis=1, keepdims=True)
+    normed = vectors / (norm + 1e-8)
+    sim_matrix = np.dot(normed, normed.T)
+    # 상삼각행렬에서 자기 자신 제외, threshold 이상 비율 계산
+    n = len(texts)
+    redundant = 0
+    total = 0
+    for i in range(n):
+        for j in range(i+1, n):
+            total += 1
+            if sim_matrix[i, j] >= threshold:
+                redundant += 1
+    return redundant / total if total else 0.0
+
+# 할 일 이행 비율 측정
+def action_item_completion_ratio(messages, action_items):
+    if not action_items:
+        return 0.0
+    completed = 0
+    texts = [m['text'] for m in messages]
+    for item in action_items:
+        # Action Item에서 핵심 키워드 추출 (단순화: 첫 5글자)
+        keyword = item.replace('-', '').strip().split()[0]
+        found = False
+        for text in texts:
+            if keyword in text and any(x in text for x in ["완료", "했어요", "PR", "merge", "끝", "처리"]):
+                found = True
+                break
+        if found:
+            completed += 1
+    return completed / len(action_items)
+
 def append_report_to_notion(report: str):
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     PAGE_ID = os.getenv("NOTION_PAGE_ID")
@@ -124,13 +169,16 @@ def main():
     avg_resp = avg_response_time(messages)
     sum_len = summary_length(messages)
     speaker_dist = speaker_distribution(messages)
-    # (중복도, 할 일 이행 비율 등은 추후 추가)
+    redundancy = message_redundancy(messages)
+    completion_ratio = action_item_completion_ratio(messages, action_items)
     report = f"[오늘의 생산성 메트릭]\n"
     report += f"정보 밀도: {info_density:.2f}\n"
     report += f"Action Item 수: {len(action_items)}\n"
     report += f"평균 응답 속도: {avg_resp:.1f}분\n"
     report += f"요약 길이: {sum_len} 단어\n"
     report += f"발화자 분포: {speaker_dist}\n"
+    report += f"대화 중복도: {redundancy:.2%}\n"
+    report += f"Action Item 이행 비율: {completion_ratio:.2%}\n"
     # send_slack_message(report)
     append_report_to_notion(report)
 
