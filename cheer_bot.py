@@ -60,21 +60,23 @@ def generate_cheer_message(user_message):
 client = WebClient(token=SLACK_BOT_TOKEN)
 socket_client = SocketModeClient(app_token=SLACK_APP_TOKEN, web_client=client)
 
-@socket_client.on("events_api")
-def handle_events_api(event):
-    req = event["payload"]
-    if req["event"]["type"] == "message":
-        msg = req["event"]
-        if should_respond_to_message(msg):
-            cheer_message = generate_cheer_message(msg["text"])
-            if cheer_message:
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-                message = f"*[{current_time}] 응원 메시지*\n\n{cheer_message}"
-                client.chat_postMessage(channel=msg["channel"], text=message, thread_ts=msg["ts"])
-                add_clap_reaction(msg["ts"])
-                save_responded_message(msg["ts"])
-    # 이벤트 응답
-    socket_client.send_socket_mode_response(SocketModeResponse(envelope_id=event["envelope_id"]))
+def handle_events_api(client, req):
+    if req.type == "events_api":
+        event = req.payload["event"]
+        if event["type"] == "message":
+            msg = event
+            if should_respond_to_message(msg):
+                cheer_message = generate_cheer_message(msg["text"])
+                if cheer_message:
+                    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+                    message = f"*[{current_time}] 응원 메시지*\n\n{cheer_message}"
+                    client.web_client.chat_postMessage(channel=msg["channel"], text=message, thread_ts=msg["ts"])
+                    add_clap_reaction(msg["ts"])
+                    save_responded_message(msg["ts"])
+        # 이벤트 응답
+        client.send_socket_mode_response(SocketModeResponse(envelope_id=req.envelope_id))
+
+socket_client.socket_mode_request_listeners.append(handle_events_api)
 
 if __name__ == "__main__":
     print("🚀 Cheer Up Bot (Socket Mode) Started!")
