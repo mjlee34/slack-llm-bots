@@ -5,8 +5,10 @@ import openai
 from slack_sdk.errors import SlackApiError
 from collections import defaultdict
 import notion_client
+from openai import OpenAI
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 오늘 메시지 수집
 def get_today_messages():
@@ -29,7 +31,7 @@ def information_density(messages):
     informative = 0
     for msg in messages:
         prompt = f"이 Slack 메시지는 정보 전달(논의/결정/지식공유)인가요, 아니면 잡담인가요?\n메시지: {msg['text']}\n답: informative 또는 chatter로만 답하세요."
-        resp = openai.ChatCompletion.create(
+        resp = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=10, temperature=0
@@ -42,7 +44,7 @@ def information_density(messages):
 # Action Item 추출
 def extract_action_items(messages):
     prompt = "아래는 오늘 Slack 대화입니다. Action Item(할 일, 요청, 결정 등)을 항목별로 추출해줘.\n" + "\n".join([m['text'] for m in messages])
-    resp = openai.ChatCompletion.create(
+    resp = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=300, temperature=0.3
@@ -66,7 +68,7 @@ def avg_response_time(messages):
 # 요약 길이(단어 수)
 def summary_length(messages):
     prompt = "아래는 오늘 Slack 대화입니다. 요약해줘.\n" + "\n".join([m['text'] for m in messages])
-    resp = openai.ChatCompletion.create(
+    resp = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=500, temperature=0.5
