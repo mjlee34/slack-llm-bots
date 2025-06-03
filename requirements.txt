@@ -1,4 +1,5 @@
 slack_sdk
 openai
 python-dotenv
-schedule 
+schedule
+notion-client 
