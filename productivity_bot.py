@@ -113,6 +113,7 @@ def append_report_to_notion(report: str):
 
 # 메트릭 종합 및 전송
 def main():
+    
     messages = get_today_messages()
     if not messages:
         send_slack_message("오늘 대화가 없습니다. (생산성 평가 불가)")
@@ -129,7 +130,7 @@ def main():
     report += f"평균 응답 속도: {avg_resp:.1f}분\n"
     report += f"요약 길이: {sum_len} 단어\n"
     report += f"발화자 분포: {speaker_dist}\n"
-    send_slack_message(report)
+    # send_slack_message(report)
     append_report_to_notion(report)
 
 if __name__ == "__main__":
