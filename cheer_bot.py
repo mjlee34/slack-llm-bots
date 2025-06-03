@@ -78,6 +78,11 @@ def handle_events_api(client, req):
 
 socket_client.socket_mode_request_listeners.append(handle_events_api)
 
+def on_open(client):
+    print("✅ Socket Mode WebSocket 연결 성공!")
+
+socket_client.on("open", on_open)
+
 if __name__ == "__main__":
     print("🚀 Cheer Up Bot (Socket Mode) Started!")
     socket_client.connect()
