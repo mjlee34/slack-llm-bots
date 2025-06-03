@@ -18,4 +18,17 @@ def generate_ai_response(prompt):
         max_tokens=300,
         temperature=0.7,
     )
-    return response.choices[0].message.content.strip() 
+    return response.choices[0].message.content.strip()
+
+def add_clap_reaction(ts, channel=None):
+    """
+    특정 메시지(ts)에 👏 리액션을 추가합니다.
+    channel이 None이면 기본 CHANNEL_ID 사용.
+    """
+    if channel is None:
+        channel = CHANNEL_ID
+    slack_client.reactions_add(
+        channel=channel,
+        name="clap",
+        timestamp=ts
+    ) 
