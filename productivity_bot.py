@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from utils import send_slack_message, slack_client, CHANNEL_ID
 import openai
 from slack_sdk.errors import SlackApiError
@@ -12,7 +13,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 오늘 메시지 수집
 def get_today_messages():
-    now = datetime.now()
+    now = datetime.now(ZoneInfo("Asia/Seoul"))
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     try:
         response = slack_client.conversations_history(
@@ -88,7 +89,7 @@ def append_report_to_notion(report: str):
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     PAGE_ID = os.getenv("NOTION_PAGE_ID")
     notion = notion_client.Client(auth=NOTION_TOKEN)
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
     try:
         notion.blocks.children.append(
             block_id=PAGE_ID,

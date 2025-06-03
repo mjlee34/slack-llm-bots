@@ -2,6 +2,7 @@ from utils import slack_client, send_slack_message, get_channel_messages, genera
 import schedule
 import time
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 import os
@@ -44,7 +45,7 @@ def generate_daily_summary():
     update_progress(progress_message, "📥 Slack 메시지를 수집하는 중입니다...")
     
     # 오늘 자정부터의 타임스탬프 계산
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    today_start = datetime.now(ZoneInfo("Asia/Seoul")).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     
     try:
         # 오늘의 메시지 가져오기
@@ -116,7 +117,7 @@ def generate_daily_summary():
     
     # 메시지 전송
     if summary:
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+        current_time = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
         message = f"*[{current_time}] 오늘의 대화 요약*\n\n{summary}"
         if action_items:
             message += "\n\n*오늘의 Action Items*\n" + "\n".join(action_items)
@@ -134,7 +135,7 @@ def generate_daily_summary():
     delete_progress(progress_message)
 
 def get_today_messages():
-    now = datetime.now()
+    now = datetime.now(ZoneInfo("Asia/Seoul"))
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     try:
         response = slack_client.conversations_history(
