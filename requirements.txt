@@ -1,0 +1,4 @@
+slack_sdk
+openai
+python-dotenv
+schedule 
