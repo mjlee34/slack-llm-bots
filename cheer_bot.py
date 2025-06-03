@@ -79,9 +79,9 @@ def handle_events_api(client, req):
 socket_client.socket_mode_request_listeners.append(handle_events_api)
 
 if __name__ == "__main__":
-    print("🚀 Cheer Up Bot (Socket Mode) Started!")
+    print("🚀 Cheer Up Bot (Socket Mode) Started!", flush=True)
     socket_client.connect()
-    print("✅ Socket Mode WebSocket 연결 시도 완료 (이후 이벤트가 오면 정상 연결)")
+    print("✅ Socket Mode WebSocket 연결 시도 완료 (이후 이벤트가 오면 정상 연결)", flush=True)
     import time
     while True:
         time.sleep(10)
