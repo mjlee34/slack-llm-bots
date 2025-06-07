@@ -6,7 +6,9 @@ from zoneinfo import ZoneInfo
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 import os
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def extract_action_items(conversation):
     """
@@ -153,8 +155,7 @@ def summarize(messages):
     if not messages:
         return "오늘 대화가 없습니다."
     prompt = "다음은 오늘 팀 채널에서 나눈 대화 내용입니다. 요약해줘:\n" + "\n".join(messages)
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=500,
