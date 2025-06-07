@@ -1,18 +1,18 @@
 import os
 from slack_sdk import WebClient
 from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 
 load_dotenv()
 slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
 CHANNEL_ID = os.getenv("CHANNEL_ID")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def send_slack_message(message):
     slack_client.chat_postMessage(channel=CHANNEL_ID, text=message)
 
 def generate_ai_response(prompt):
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=300,
@@ -31,4 +31,14 @@ def add_clap_reaction(ts, channel=None):
         channel=channel,
         name="clap",
         timestamp=ts
-    ) 
+    )
+
+def show_progress(message):
+    print(message, flush=True)
+    return None
+
+def update_progress(progress_message, message):
+    print(message, flush=True)
+
+def delete_progress(progress_message):
+    print("진행 상황 메시지 삭제", flush=True) 
