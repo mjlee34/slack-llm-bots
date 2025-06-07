@@ -1,4 +1,4 @@
-from utils import slack_client, send_slack_message, get_channel_messages, generate_ai_response, show_progress, update_progress, delete_progress, CHANNEL_ID
+from utils import slack_client, send_slack_message, generate_ai_response, show_progress, update_progress, delete_progress, CHANNEL_ID
 import schedule
 import time
 from datetime import datetime, timedelta
