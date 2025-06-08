@@ -109,6 +109,12 @@ def run_dummy_server():
     app.run(host="0.0.0.0", port=10000, debug=True)
 
 if __name__ == "__main__":
+    print("[DEBUG] SLACK_BOT_TOKEN:", os.environ.get("SLACK_BOT_TOKEN"), flush=True)
+    print("[DEBUG] SLACK_APP_TOKEN:", os.environ.get("SLACK_APP_TOKEN"), flush=True)
+    print("[DEBUG] BOT_USER_ID:", os.environ.get("BOT_USER_ID"), flush=True)
+    print("[DEBUG] TARGET_USER_IDS:", TARGET_USER_IDS, flush=True)
+    print("[DEBUG] OPENAI_API_KEY:", os.environ.get("OPENAI_API_KEY"), flush=True)
+    print("[DEBUG] CHANNEL_ID:", os.environ.get("CHANNEL_ID"), flush=True)
     threading.Thread(target=run_dummy_server, daemon=True).start()
     print("🚀 Cheer Up Bot (Socket Mode) Started!", flush=True)
     socket_client.connect()
