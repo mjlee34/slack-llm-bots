@@ -106,7 +106,7 @@ def run_dummy_server():
     def index():
         return "OK"
 
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=False)
 
 if __name__ == "__main__":
     print("[DEBUG] SLACK_BOT_TOKEN:", os.environ.get("SLACK_BOT_TOKEN"), flush=True)
