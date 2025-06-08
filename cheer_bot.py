@@ -13,7 +13,7 @@ from utils import generate_ai_response, add_clap_reaction
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_APP_TOKEN = os.environ["SLACK_APP_TOKEN"]
 BOT_USER_ID = os.environ.get("BOT_USER_ID")
-TARGET_USER_IDS = ["U08TA111MPH", "U08TR4D0YHY"]  # Cheolho Kang님, 추가 유저
+TARGET_USER_IDS = ["U08TA111MPH", "U08TR4D0YHY", "U090HHENPFU"]  # Cheolho Kang님, 추가 유저
 RESPONDED_MESSAGES_FILE = "responded_messages.json"
 
 def load_responded_messages():
@@ -50,16 +50,24 @@ def should_respond_to_message(msg):
     print(f"[DEBUG] 모든 필터 통과! 응원 대상 메시지 (ts={msg['ts']})", flush=True)
     return True
 
-def generate_cheer_message(user_message):
+def get_user_display_name(user_id):
+    try:
+        user_info = client.users_info(user=user_id)
+        return user_info["user"]["profile"].get("display_name") or user_info["user"]["profile"].get("real_name")
+    except Exception as e:
+        print(f"[DEBUG] 닉네임 조회 실패: {e}", flush=True)
+        return "사용자"
+
+def generate_cheer_message(user_message, user_display_name):
     prompt = f"""
-    다음은 Cheolho Kang님이 작성한 메시지입니다. 이 메시지에 대해 강한 동의와 아부(칭찬, 감탄, 적극적 공감 등)를 섞어, 친근하고 격려하는 응원 메시지를 작성해주세요.
+    다음은 {user_display_name}님이 작성한 메시지입니다. 이 메시지에 대해 강한 동의와 아부(칭찬, 감탄, 적극적 공감 등)를 섞어, 친근하고 격려하는 응원 메시지를 작성해주세요.
     메시지는 2-3줄 이내로 간단하게 작성해주세요.
     
-    Cheolho Kang님의 메시지:
+    {user_display_name}님의 메시지:
     {user_message}
     
     예시 응답:
-    정말 탁월한 의견이에요! Cheolho Kang님 덕분에 팀이 한 단계 성장할 것 같아요. 이런 통찰력, 정말 존경스럽습니다! 👏
+    정말 탁월한 의견이에요! {user_display_name}님 덕분에 팀이 한 단계 성장할 것 같아요. 이런 통찰력, 정말 존경스럽습니다! 👏
     """
     return generate_ai_response(prompt)
 
@@ -74,8 +82,9 @@ def handle_events_api(client, req):
         if event["type"] == "message":
             msg = event
             if should_respond_to_message(msg):
-                print(f"[DEBUG] 응원 메시지 생성 시작 (ts={msg['ts']})", flush=True)
-                cheer_message = generate_cheer_message(msg["text"])
+                user_display_name = get_user_display_name(msg["user"])
+                print(f"[DEBUG] 응원 메시지 생성 시작 (ts={msg['ts']}, user={user_display_name})", flush=True)
+                cheer_message = generate_cheer_message(msg["text"], user_display_name)
                 if cheer_message:
                     print(f"[DEBUG] 응원 메시지 전송 (ts={msg['ts']})", flush=True)
                     current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
