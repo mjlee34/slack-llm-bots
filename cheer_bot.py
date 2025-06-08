@@ -9,11 +9,13 @@ from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 from utils import generate_ai_response, add_clap_reaction
+import threading
+from flask import Flask
 
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_APP_TOKEN = os.environ["SLACK_APP_TOKEN"]
 BOT_USER_ID = os.environ.get("BOT_USER_ID")
-TARGET_USER_IDS = ["U08TA111MPH", "U08TR4D0YHY", "U090HHENPFU"]  # Cheolho Kang님, 추가 유저
+TARGET_USER_IDS = ["U08TA111MPH"]  # Cheolho Kang님, 추가 유저
 RESPONDED_MESSAGES_FILE = "responded_messages.json"
 
 def load_responded_messages():
@@ -66,8 +68,6 @@ def generate_cheer_message(user_message, user_display_name):
     {user_display_name}님의 메시지:
     {user_message}
     
-    예시 응답:
-    정말 탁월한 의견이에요! {user_display_name}님 덕분에 팀이 한 단계 성장할 것 같아요. 이런 통찰력, 정말 존경스럽습니다! 👏
     """
     return generate_ai_response(prompt)
 
@@ -99,7 +99,17 @@ def handle_events_api(client, req):
 
 socket_client.socket_mode_request_listeners.append(handle_events_api)
 
+def run_dummy_server():
+    app = Flask(__name__)
+
+    @app.route("/")
+    def index():
+        return "OK"
+
+    app.run(host="0.0.0.0", port=10000)
+
 if __name__ == "__main__":
+    threading.Thread(target=run_dummy_server, daemon=True).start()
     print("🚀 Cheer Up Bot (Socket Mode) Started!", flush=True)
     socket_client.connect()
     print("✅ Socket Mode WebSocket 연결 시도 완료 (이후 이벤트가 오면 정상 연결)", flush=True)
