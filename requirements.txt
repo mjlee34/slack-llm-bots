@@ -3,4 +3,5 @@ openai
 python-dotenv
 schedule
 notion-client
-numpy 
+numpy
+flask 
