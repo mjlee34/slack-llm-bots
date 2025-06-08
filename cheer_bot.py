@@ -13,7 +13,7 @@ from utils import generate_ai_response, add_clap_reaction
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_APP_TOKEN = os.environ["SLACK_APP_TOKEN"]
 BOT_USER_ID = os.environ.get("BOT_USER_ID")
-CHEOLHO_USER_ID = "U08TA111MPH"  # Cheolho Kang님의 user_id
+TARGET_USER_IDS = ["U08TA111MPH", "U08TR4D0YHY"]  # Cheolho Kang님, 추가 유저
 RESPONDED_MESSAGES_FILE = "responded_messages.json"
 
 def load_responded_messages():
@@ -29,19 +29,25 @@ def save_responded_message(message_id):
         json.dump(responded, f)
 
 def should_respond_to_message(msg):
-    # 1. Cheolho Kang님이 쓴 메시지
-    if msg.get("user") != CHEOLHO_USER_ID:
+    print(f"[DEBUG] 수신 메시지: {msg}", flush=True)
+    # 1. 지정된 유저가 쓴 메시지
+    if msg.get("user") not in TARGET_USER_IDS:
+        print(f"[DEBUG] 필터: 대상 유저 아님 ({msg.get('user')})", flush=True)
         return False
     # 2. 스레드(댓글)에는 반응하지 않음
     if msg.get("thread_ts") and msg["thread_ts"] != msg["ts"]:
+        print(f"[DEBUG] 필터: 스레드/댓글 메시지 (ts={msg['ts']}, thread_ts={msg['thread_ts']})", flush=True)
         return False
     # 3. 이미 응답한 메시지에는 또 반응하지 않음
     responded = load_responded_messages()
     if msg["ts"] in responded:
+        print(f"[DEBUG] 필터: 이미 응답한 메시지 (ts={msg['ts']})", flush=True)
         return False
     # 4. 텍스트 없는 메시지 제외
     if "text" not in msg or not msg["text"].strip():
+        print(f"[DEBUG] 필터: 텍스트 없음", flush=True)
         return False
+    print(f"[DEBUG] 모든 필터 통과! 응원 대상 메시지 (ts={msg['ts']})", flush=True)
     return True
 
 def generate_cheer_message(user_message):
@@ -61,18 +67,24 @@ client = WebClient(token=SLACK_BOT_TOKEN)
 socket_client = SocketModeClient(app_token=SLACK_APP_TOKEN, web_client=client)
 
 def handle_events_api(client, req):
+    print(f"[DEBUG] 이벤트 수신: type={req.type}", flush=True)
     if req.type == "events_api":
         event = req.payload["event"]
+        print(f"[DEBUG] 이벤트 payload: {event}", flush=True)
         if event["type"] == "message":
             msg = event
             if should_respond_to_message(msg):
+                print(f"[DEBUG] 응원 메시지 생성 시작 (ts={msg['ts']})", flush=True)
                 cheer_message = generate_cheer_message(msg["text"])
                 if cheer_message:
+                    print(f"[DEBUG] 응원 메시지 전송 (ts={msg['ts']})", flush=True)
                     current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
                     message = f"*[{current_time}] 응원 메시지*\n\n{cheer_message}"
                     client.web_client.chat_postMessage(channel=msg["channel"], text=message, thread_ts=msg["ts"])
                     add_clap_reaction(msg["ts"])
                     save_responded_message(msg["ts"])
+                else:
+                    print(f"[DEBUG] 응원 메시지 생성 실패 (ts={msg['ts']})", flush=True)
         # 이벤트 응답
         client.send_socket_mode_response(SocketModeResponse(envelope_id=req.envelope_id))
 
